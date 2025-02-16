@@ -10,20 +10,29 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  async signUp(@Body() userData: { email: string; password: string; name: string }) {
+  async signUp(@Body() userData: SignUpDto) {
     return this.authService.signUp(userData);
   }
 
   @Post('signin')
   @HttpCode(HttpStatus.OK)
   async signIn(@Body() credentials: { email: string; password: string }) {
-    return this.authService.signIn(credentials);
+    return this.authService.signIn(credentials.email, credentials.password);
   }
 
   @Post('signout')
   @HttpCode(HttpStatus.OK)
-  async signOut() {
-    return { success: true };
+  async signOut(@Headers('authorization') auth: string) {
+    try {
+      const token = auth?.split(' ')[1]
+      if (!token) {
+        throw new UnauthorizedException('No token provided')
+      }
+      await this.authService.signOut(token)
+      return { success: true }
+    } catch (error) {
+      throw new UnauthorizedException('Failed to sign out')
+    }
   }
 
   @Get('profile')
@@ -97,7 +106,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async requestPasswordReset(@Body() { email }: RequestPasswordResetDto) {
-    return this.authService.requestPasswordReset(email);
+    return this.authService.requestPasswordReset(email)
   }
 
   @Post('reset-password')
@@ -106,10 +115,10 @@ export class AuthController {
     @Body() resetPasswordDto: ResetPasswordDto,
     @Headers('authorization') auth: string
   ) {
-    const token = auth?.replace('Bearer ', '');
+    const token = auth?.split(' ')[1]
     if (!token) {
-      throw new UnauthorizedException('No token provided');
+      throw new UnauthorizedException('No token provided')
     }
-    return this.authService.resetPassword(resetPasswordDto, token);
+    return this.authService.resetPassword(resetPasswordDto, token)
   }
 } 

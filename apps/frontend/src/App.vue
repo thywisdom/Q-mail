@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { RouterView } from 'vue-router'
-import { useRouter } from 'vue-router'
-import NotificationToast from '@/components/NotificationToast.vue'
+import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import NotificationToast from '@/components/NotificationToast.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -11,6 +10,24 @@ const initialized = ref(false)
 
 onMounted(async () => {
   try {
+    // Check URL for auth callback parameters
+    const urlParams = new URLSearchParams(window.location.search)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    
+    const code = urlParams.get('code')
+    const access_token = hashParams.get('access_token')
+    const refresh_token = hashParams.get('refresh_token')
+
+    if (code || access_token) {
+      await authStore.handleGoogleCallback({ 
+        code, 
+        access_token, 
+        refresh_token 
+      })
+      return
+    }
+
+    // Otherwise try to restore existing session
     const isAuthenticated = await authStore.initializeAuth()
     if (!isAuthenticated && router.currentRoute.value.meta.requiresAuth) {
       router.push('/auth/login')

@@ -1,12 +1,9 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  private supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  constructor(private supabaseService: SupabaseService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -14,7 +11,14 @@ export class AuthGuard implements CanActivate {
 
     if (!token) return false;
 
-    const { data: { user }, error } = await this.supabase.auth.getUser(token);
-    return !error && !!user;
+    const { data: { user }, error } = await this.supabaseService
+      .getClient()
+      .auth.getUser(token);
+
+    if (error || !user) return false;
+
+    // Attach user to request for controllers
+    request.user = user;
+    return true;
   }
 } 

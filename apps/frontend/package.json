@@ -15,6 +15,7 @@
     "@vueuse/core": "^10.9.0",
     "@vueuse/head": "^2.0.0",
     "axios": "^1.6.7",
+    "axios-auth-refresh": "^3.3.6",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^4.2.0",
     "vue": "^3.4.19",
